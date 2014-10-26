@@ -8,8 +8,7 @@ pretty_dict = json.dumps(permissions, sort_keys=True, indent=4, separators=(',',
 
 print(pretty_dict)
 
-exit
-
+"""
 import gspread, os, commands
 print os.environ["GDRIVE_USER"]
 gdrive_user=os.environ["GDRIVE_USER"]
@@ -60,5 +59,5 @@ instance = "inst1"
 pub_key = get_public_key(user)
 create_user_on_instance(user,instance)
 copy_ssh_key_to_instance(pub_key,user,instance)
-
+"""
 
