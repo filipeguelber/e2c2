@@ -1,3 +1,0 @@
-[submodule "modules/gspread"]
-	path = modules/gspread
-	url = git@github.com:burnash/gspread.git
