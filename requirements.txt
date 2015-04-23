@@ -1,1 +1,2 @@
-gspread
+gspread==0.2.1
+oauth2client
