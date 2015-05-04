@@ -8,11 +8,8 @@ class E2C2(Logger):
     CREATE_USER_ON_INSTANCE = "ssh -i {PEM_PATH} {INSTANCE} 'sudo adduser {USER} --gecos \"\" --disabled-password'"
     HOME_DIR = '/home/{USER}/'
     SSH_DIR = '/home/{USER}/.ssh'
-    CREATE_DIR = """ssh -i {PEM_PATH} {INSTANCE} \
-    'sudo -u {USER} mkdir -p {SSH_DIR} && \
-     chmod 700 {SSH_DIR} && \
-     touch {SSH_DIR}/authorized_keys && \
-     chmod 600 {SSH_DIR}/authorized_keys'"""
+    CREATE_DIR = "ssh -i {PEM_PATH} {INSTANCE} \
+    'sudo -u {USER} mkdir -p {SSH_DIR}'"
     ADD_USER_KEY_TO_AUTHORIZED_KEYS = "ssh -i {PEM_PATH} {INSTANCE} \"sudo -u {USER} sh -c \'echo \"{USER_KEY}\" >> {SSH_DIR}/authorized_keys\'\""
     CHECK_USER_EXISTS = "ssh -i {PEM_PATH} {INSTANCE} 'cut -d: -f1 /etc/passwd | grep {USER}'"
     DELETE_USER_ON_INSTANCE = "ssh -i {PEM_PATH} {INSTANCE} 'sudo userdel {USER}'"
@@ -35,10 +32,10 @@ class E2C2(Logger):
 
     def get_host(self, instance):
         self.logger.info("Get host by %s" % instance)
-        return self.instances[instance]
+        return self.instances[instance]['host']
 
     def get_pem_file(self, instance):
-        return instance + '.pem'
+        return 'keys/' + self.instances[instance]['key']
 
     def user_exists(self, user, instance):
         command = self.CHECK_USER_EXISTS.format(
@@ -54,17 +51,23 @@ class E2C2(Logger):
             return False
 
     def delete_user(self, user, instance):
-        command = self.DELETE_USER_ON_INSTANCE.format(
-            PEM_PATH=self.get_pem_file(instance),
-            USER=user,
-            INSTANCE=self.get_host(instance)
-        )
-        self.logger.debug("DELETE_USER_ON_INSTANCE:\n%s" % command)
+
+        if self.user_exists(user, instance):
+            self.logger.debug("DELETE_USER_ON_INSTANCE:\n user found")
+            command = self.DELETE_USER_ON_INSTANCE.format(
+                PEM_PATH=self.get_pem_file(instance),
+                USER=user,
+                INSTANCE=self.get_host(instance)
+            )
+            self.logger.debug("DELETE_USER_ON_INSTANCE:\n%s" % command)
+            self.execute_shell_command(command)
+        else:
+            self.logger.debug("DELETE_USER_ON_INSTANCE:\n user not found")
 
     def create_user_on_instance(self, user, instance):
 
         if self.user_exists(user, instance):
-            self.logger.debug("CREATE_USER_ON_INSTANCE:\n user exists")
+            self.logger.debug("CREATE_USER_ON_INSTANCE:\n user found")
         else:
             command = self.CREATE_USER_ON_INSTANCE.format(
                 PEM_PATH=self.get_pem_file(instance),
