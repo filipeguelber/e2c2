@@ -6,13 +6,14 @@ from subprocess import Popen, PIPE, STDOUT
 
 class E2C2(Logger):
     CREATE_USER_ON_INSTANCE = "ssh -i {PEM_PATH} {INSTANCE} 'sudo adduser {USER} --gecos \"\" --disabled-password'"
+    ADD_USER_TO_SUDOERS_GROUP = "ssh -i {PEM_PATH} {INSTANCE} 'sudo usermod -a -G sudo {USER}'"
     HOME_DIR = '/home/{USER}/'
     SSH_DIR = '/home/{USER}/.ssh'
     CREATE_DIR = "ssh -i {PEM_PATH} {INSTANCE} \
     'sudo -u {USER} mkdir -p {SSH_DIR}'"
     ADD_USER_KEY_TO_AUTHORIZED_KEYS = "ssh -i {PEM_PATH} {INSTANCE} \"sudo -u {USER} sh -c \'echo \"{USER_KEY}\" >> {SSH_DIR}/authorized_keys\'\""
     CHECK_USER_EXISTS = "ssh -i {PEM_PATH} {INSTANCE} 'cut -d: -f1 /etc/passwd | grep {USER}'"
-    DELETE_USER_ON_INSTANCE = "ssh -i {PEM_PATH} {INSTANCE} 'sudo userdel {USER}'"
+    DELETE_USER_ON_INSTANCE = "ssh -i {PEM_PATH} {INSTANCE} 'sudo userdel -r {USER}'"
 
     def __init__(self):
         Logger.__init__(self)
@@ -89,17 +90,35 @@ class E2C2(Logger):
             self.execute_shell_command(command)
 
     def add_user_key_to_instance(self, user, instance):
-        self.create_user_on_instance(user, instance)
 
-        command = self.ADD_USER_KEY_TO_AUTHORIZED_KEYS.format(
-            USER=user,
-            USER_KEY=self.get_public_key(user),
-            SSH_DIR=self.SSH_DIR.format(USER=user),
-            PEM_PATH=self.get_pem_file(instance),
-            INSTANCE=self.get_host(instance)
-        )
-        self.logger.debug("ADD_USER_KEY_TO_AUTHORIZED_KEYS:\n%s" % command)
-        self.execute_shell_command(command)
+        if self.user_exists(user, instance):
+            self.logger.debug("ADD_USER_KEY_TO_INSTANCE:\n user found")
+            command = self.ADD_USER_KEY_TO_AUTHORIZED_KEYS.format(
+                USER=user,
+                USER_KEY=self.get_public_key(user),
+                SSH_DIR=self.SSH_DIR.format(USER=user),
+                PEM_PATH=self.get_pem_file(instance),
+                INSTANCE=self.get_host(instance)
+            )
+            self.logger.debug("ADD_USER_KEY_TO_AUTHORIZED_KEYS:\n%s" % command)
+            self.execute_shell_command(command)
+        else:
+            self.logger.debug("ADD_USER_KEY_TO_INSTANCE:\n user not found")
+
+    def add_user_to_sudoers_group(self, user, instance):
+
+        if self.user_exists(user, instance):
+            self.logger.debug("ADD_USER_TO_SUDOERS_GROUP:\n user found")
+            command = self.ADD_USER_TO_SUDOERS_GROUP.format(
+                USER=user,
+                SSH_DIR=self.SSH_DIR.format(USER=user),
+                PEM_PATH=self.get_pem_file(instance),
+                INSTANCE=self.get_host(instance)
+            )
+            self.logger.debug("ADD_USER_TO_SUDOERS_GROUP:\n%s" % command)
+            self.execute_shell_command(command)
+        else:
+            self.logger.debug("ADD_USER_TO_SUDOERS_GROUP:\n user not found")
 
     def execute_shell_command(self, command):
         cmd = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
