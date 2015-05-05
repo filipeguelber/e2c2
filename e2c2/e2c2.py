@@ -2,6 +2,7 @@ import json
 from GoogleSpreadsheet import GoogleSpreadsheet
 from logger import Logger
 from subprocess import Popen, PIPE, STDOUT
+import os
 
 
 class E2C2(Logger):
@@ -16,6 +17,7 @@ class E2C2(Logger):
     DELETE_USER_ON_INSTANCE = "ssh -i {PEM_PATH} {INSTANCE} 'sudo userdel -r {USER}'"
 
     def __init__(self):
+        self.pem_dir = os.environ['PEM_DIR']
         Logger.__init__(self)
         self.spreadsheet = GoogleSpreadsheet()
         self.logger.info('Downloading spreadsheets')
@@ -36,7 +38,7 @@ class E2C2(Logger):
         return self.instances[instance]['host']
 
     def get_pem_file(self, instance):
-        return 'keys/' + self.instances[instance]['key']
+        return self.pem_dir + self.instances[instance]['key']
 
     def user_exists(self, user, instance):
         command = self.CHECK_USER_EXISTS.format(
