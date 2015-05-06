@@ -54,8 +54,10 @@ class GoogleSpreadsheet(object):
         instances = {}
 
         for line in data:
-            instance, host = line
-            instances[instance] = host
+            instance = line[0]
+            instances[instance] = {}
+            instances[instance]['host'] = line[1]
+            instances[instance]['key'] = line[2]
 
         return instances
 
@@ -65,16 +67,16 @@ class GoogleSpreadsheet(object):
         permissions = {}
 
         for line in data:
+
             if counter == 0:
                 instances = line[1:]
             else:
                 user = line[0]
-
-                permissions[user] = {}
-
-                for instance, permission in zip(instances, line[1:]):
-                    permissions[user][instance] = permission
+                if not hasattr(permissions, user):
+                    permissions[user] = {}
+                    for instance, permission in zip(instances, line[1:]):
+                        if not instance == '':
+                            permissions[user][instance] = permission
 
             counter += 1
-
         return permissions
