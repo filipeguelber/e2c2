@@ -1,2 +1,2 @@
-gspread==0.2.1
-oauth2client
+gspread==0.2.5
+oauth2client==1.4.12

@@ -1,5 +1,7 @@
+import json
 import os
 import gspread
+from oauth2client.client import SignedJwtAssertionCredentials
 
 
 class GoogleSpreadsheet(object):
@@ -9,14 +11,16 @@ class GoogleSpreadsheet(object):
     WORKSHEET_PERMISSIONS = 'Permissions'
 
     def __init__(self):
-        self.username = os.environ['GDRIVE_USERNAME']
-        self.password = os.environ['GDRIVE_PASSWORD']
+        self.credentials_path = os.environ['CREDENTIALS_PATH']
 
-    def _login(self, username, password):
-        return gspread.login(username, password)
+    def _login(self):
+        json_key = json.load(open(self.credentials_path))
+        scope = ['https://spreadsheets.google.com/feeds']
+        credentials = SignedJwtAssertionCredentials(json_key['client_email'], json_key['private_key'], scope)
+        return gspread.authorize(credentials)
 
     def _open_spreadsheet(self, worksheet):
-        spreadsheet = self._login(self.username, self.password)
+        spreadsheet = self._login()
         spreadsheet = spreadsheet.open(self.SPREADSHEET).worksheet(worksheet)
         return spreadsheet.get_all_values()
 
