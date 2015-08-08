@@ -47,6 +47,7 @@ coverage.xml
 # Django stuff:
 *.log
 *.pem
+credentials.json
 
 # Sphinx documentation
 docs/_build/
